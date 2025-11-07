@@ -43,6 +43,9 @@ class ArrecadacoesController extends Controller
         if ($this->existeArrecadacao($request->tributo, $request->mes, $request->ano)) {
             return $this->error('Já existe um registro para este tributo, mês e ano!', 409);
         }
+        if ($this->verificarDataMaior($request->mes, $request->ano)){
+            return $this->error('Não é possível adicionar tributo para datas futuras!', 400);
+        }
 
         // Cria a arrecadação no banco de dados
         $created = Arrecadacoes::create($validator->validated());
@@ -82,8 +85,8 @@ class ArrecadacoesController extends Controller
             return $this->error('Dados inválidos!', 422, (array)$validator->errors());
         }
 
-        if ($this->existeArrecadacao($request->tributo, $request->mes, $request->ano)) {
-            return $this->error('Já existe um registro para este tributo, mês e ano!', 409);
+        if ($this->verificarDataMaior($request->mes, $request->ano)){
+            return $this->error('Não é possível atualizar tributo para datas futuras!', 400);
         }
 
         $validated = $validator->validated();
@@ -175,6 +178,24 @@ class ArrecadacoesController extends Controller
             ->where('mes', $mes)
             ->where('ano', $ano)
             ->exists();
+    }
+
+    private function verificarDataMaior($mes, $ano)
+    {
+        $mesAtual = date('m');
+        $anoAtual = date('Y');
+
+        // se o ano for maior que o atual
+        if ($ano > $anoAtual) {
+            return true;
+        }
+
+        // se o ano for o mesmo, mas o mês for maior que o atual
+        if ($ano == $anoAtual && $mes > $mesAtual) {
+            return true;
+        }
+
+        return false;
     }
 
 }
