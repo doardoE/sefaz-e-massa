@@ -12,3 +12,4 @@ ROute::post('/arrecadacoes', [ArrecadacoesController::class, 'store']);
 Route::put('/arrecadacoes/{id}', [ArrecadacoesController::class, 'update']);
 Route::delete('/arrecadacoes/{id}', [ArrecadacoesController::class, 'destroy']);
 Route::get('/arrecadacoes/{id}', [ArrecadacoesController::class, 'show']);
+Route::get('arrecadacoes/kpis/dashboard', [ArrecadacoesController::class, 'dashboard']);

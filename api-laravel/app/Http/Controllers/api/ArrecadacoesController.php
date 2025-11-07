@@ -11,6 +11,7 @@ use App\Traits\HttpResponses;
 
 class ArrecadacoesController extends Controller
 {
+    // traits para responde de erro ou sucess
     use HttpResponses;
 
     /**
@@ -18,6 +19,7 @@ class ArrecadacoesController extends Controller
      */
     public function index()
     {
+        // retorna lista com todas as arrecadaçoes
         return ArrecadacoesResource::collection(Arrecadacoes::all());
     }
 
@@ -26,6 +28,7 @@ class ArrecadacoesController extends Controller
      */
     public function store(Request $request)
     {
+        // para validar a os dados da requisição do usuário
         $validator = Validator::make($request->all(), [
             'tributo' => 'required|string|in:' . implode(',', Arrecadacoes::TRIBUTOS),
             'mes' => 'required|numeric|between:1,12',
@@ -37,18 +40,11 @@ class ArrecadacoesController extends Controller
             return $this->error('Dados incompletos ou inválidos!', 422, (array)$validator->errors());
         }
 
-        $existe = Arrecadacoes::where('tributo', $request->tributo)
-            ->where('mes', $request->mes)
-            ->where('ano', $request->ano)
-            ->exists();
-
-        if ($existe) {
-            return $this->error(
-                'Já existe um registro para este tributo, mês e ano!',
-                409,
-            );
+        if ($this->existeArrecadacao($request->tributo, $request->mes, $request->ano)) {
+            return $this->error('Já existe um registro para este tributo, mês e ano!', 409);
         }
 
+        // Cria a arrecadação no banco de dados
         $created = Arrecadacoes::create($validator->validated());
         if(!$created){
             return $this->error('Erro ao cadastrar!', 400);
@@ -64,7 +60,7 @@ class ArrecadacoesController extends Controller
      */
     public function show(string $id)
     {
-        // visualiza pelo id
+        // visualizar arrecadação de tributo pelo id
         return new ArrecadacoesResource(Arrecadacoes::where('id', $id)->first());
     }
 
@@ -73,6 +69,7 @@ class ArrecadacoesController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // para validar a os dados da requisição do usuário
         $validator = Validator::make($request->all(), [
             'id' => 'required',
             'tributo' => 'required|string|in:' . implode(',', Arrecadacoes::TRIBUTOS),
@@ -85,16 +82,8 @@ class ArrecadacoesController extends Controller
             return $this->error('Dados inválidos!', 422, (array)$validator->errors());
         }
 
-        $existe = Arrecadacoes::where('tributo', $request->tributo)
-            ->where('mes', $request->mes)
-            ->where('ano', $request->ano)
-            ->exists();
-
-        if ($existe) {
-            return $this->error(
-                'Já existe um registro para este tributo, mês e ano!',
-                409,
-            );
+        if ($this->existeArrecadacao($request->tributo, $request->mes, $request->ano)) {
+            return $this->error('Já existe um registro para este tributo, mês e ano!', 409);
         }
 
         $validated = $validator->validated();
@@ -131,4 +120,64 @@ class ArrecadacoesController extends Controller
             new ArrecadacoesResource($arrecadacao)
         );
     }
+
+    public function dashboard()
+    {
+        $anoAtual = date('Y');
+
+        // Total arrecadado
+        $totalArrecadado = Arrecadacoes::sum('valor');
+
+        // Quantidade de registros
+        $quantidadeRegistros = Arrecadacoes::count();
+
+        // Tributo destaque (maior arrecadação)
+        $tributoDestaque = Arrecadacoes::selectRaw('tributo, SUM(valor) as total')
+            ->groupBy('tributo')
+            ->orderByDesc('total')
+            ->first();
+
+        // Gráfico: arrecadação mensal do ano atual
+        $arrecadacaoMensal = Arrecadacoes::selectRaw('mes, SUM(valor) as total')
+            ->where('ano', $anoAtual)
+            ->groupBy('mes')
+            ->orderBy('mes', 'asc')
+            ->get();
+
+        // Gráfico: arrecadação por tributo (distribuição)
+        $arrecadacaoPorTributo = Arrecadacoes::selectRaw('tributo, SUM(valor) as total')
+            ->groupBy('tributo')
+            ->orderBy('tributo', 'asc')
+            ->get();
+
+        // Retorna tudo em um JSON organizado
+        return $this->response('Dados do dashboard', 200, [
+            'resumo' => [
+                'total_arrecadado' => $totalArrecadado,
+                'quantidade_registros' => $quantidadeRegistros,
+                'tributo_destaque' => [
+                    'nome' => $tributoDestaque->tributo ?? null,
+                    'valor' => $tributoDestaque->total ?? 0,
+                ],
+            ],
+            'graficos' => [
+                'arrecadacao_mensal' => $arrecadacaoMensal,
+                'arrecadacao_por_tributo' => $arrecadacaoPorTributo,
+            ],
+        ]);
+    }
+
+
+
+
+
+    //[... Métodos auxiliares...]
+    private function existeArrecadacao($tributo, $mes, $ano)
+    {
+        return Arrecadacoes::where('tributo', $tributo)
+            ->where('mes', $mes)
+            ->where('ano', $ano)
+            ->exists();
+    }
+
 }
