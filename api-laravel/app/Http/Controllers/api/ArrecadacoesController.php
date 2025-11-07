@@ -58,16 +58,16 @@ class ArrecadacoesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Arrecadacoes $arrecadacoes)
     {
         // visualizar arrecadação de tributo pelo id
-        return new ArrecadacoesResource(Arrecadacoes::where('id', $id)->first());
+        return new ArrecadacoesResource($arrecadacoes);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Arrecadacoes $arrecadacoes)
     {
         // para validar a os dados da requisição do usuário
         $validator = Validator::make($request->all(), [
@@ -87,29 +87,26 @@ class ArrecadacoesController extends Controller
         }
 
         $validated = $validator->validated();
-        $arrecadacao = Arrecadacoes::find($id);
 
-        $updated = $arrecadacao->update($validated);
+        $updated = $arrecadacoes->update($validated);
 
         if(!$updated){
             return $this->error('Erro ao atualizar!', 400);
         }
 
-        return $this->response('Dados atualizados com sucesso!', 200, new ArrecadacoesResource($arrecadacao));
+        return $this->response('Dados atualizados com sucesso!', 200, new ArrecadacoesResource($arrecadacoes));
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Arrecadacoes $arrecadacoes)
     {
-        $arrecadacao = Arrecadacoes::find($id);
-
-        if (!$arrecadacao) {
+        if (!$arrecadacoes) {
             return $this->error('Registro não encontrado!', 404);
         }
 
-        $deleted = $arrecadacao->delete();
+        $deleted = $arrecadacoes->delete();
         if (!$deleted) {
             return $this->error('Erro ao deletar!', 500);
         }
@@ -117,7 +114,7 @@ class ArrecadacoesController extends Controller
         return $this->response(
             'Tributo deletado com sucesso!',
             200,
-            new ArrecadacoesResource($arrecadacao)
+            new ArrecadacoesResource($arrecadacoes)
         );
     }
 
