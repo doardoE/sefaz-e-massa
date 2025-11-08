@@ -1,11 +1,18 @@
 <script setup>
-import { Camera } from 'lucide-vue-next';
+import Header from './components/pages/Header.vue';
+import Footer from './components/pages/Footer.vue';
+import HomePage from './components/pages/HomePage.vue';
+import Dashboard from './components/pages/Dashboard.vue';
+import Login from './components/pages/login.vue';
+
 </script>
 
 <template>
-  <div class="p-6 bg-blue-500 text-white text-center rounded-xl">
-    Tailwind está funcionando 🎉
-  </div>
-  lucide está funcionando!
-  <Camera color="red" :size="32" />
+
+  <Login></Login>
+  <Header></Header>
+  <HomePage></HomePage>
+  <Dashboard></Dashboard>
+  <Footer></Footer>
+
 </template>
