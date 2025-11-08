@@ -81,7 +81,6 @@ class ArrecadacoesController extends Controller
 
         // para validar a os dados da requisição do usuário
         $validator = Validator::make($request->all(), [
-            'id' => 'required',
             'tributo' => 'required|string|in:' . implode(',', Arrecadacoes::TRIBUTOS),
             'mes' => 'required|numeric|between:1,12',
             'ano' => 'required|numeric|min:2015|max:'.date('Y'),
