@@ -96,6 +96,10 @@ class ArrecadacoesController extends Controller
             return $this->error('Não é possível atualizar tributo para datas futuras!', 400);
         }
 
+        if ($this->existeArrecadacao($request->tributo, $request->mes, $request->ano, $request->id)) {
+            return $this->error('Já existe um registro para este tributo, mês e ano!', 409);
+        }
+
         $validated = $validator->validated();
 
         $updated = $arrecadacoes->update($validated);
@@ -270,13 +274,17 @@ class ArrecadacoesController extends Controller
     }
 
     //[... Métodos auxiliares...]
-    private function existeArrecadacao($tributo, $mes, $ano)
+    private function existeArrecadacao($tributo, $mes, $ano, $id = null)
     {
         return Arrecadacoes::where('tributo', $tributo)
             ->where('mes', $mes)
             ->where('ano', $ano)
+            ->when($id, function ($query, $id) {
+                $query->where('id', '!=', $id);
+            })
             ->exists();
     }
+
 
     private function verificarDataMaior($mes, $ano)
     {
