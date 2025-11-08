@@ -12,7 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+    })
+    ->withSchedule(function () {
+        Schedule::command('sanctum:prune-expired --hours=1')->everyMinute();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

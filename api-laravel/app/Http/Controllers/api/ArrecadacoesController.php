@@ -14,6 +14,7 @@ class ArrecadacoesController extends Controller
     // traits para responde de erro ou sucess
     use HttpResponses;
 
+
     /**
      * Display a listing of the resource.
      */
@@ -28,6 +29,10 @@ class ArrecadacoesController extends Controller
      */
     public function store(Request $request)
     {
+        if (!auth()->user()->tokenCan('arr-store')) {
+            return $this->error('Não autorizado!', 403);
+        }
+
         // para validar a os dados da requisição do usuário
         $validator = Validator::make($request->all(), [
             'tributo' => 'required|string|in:' . implode(',', Arrecadacoes::TRIBUTOS),
@@ -54,8 +59,6 @@ class ArrecadacoesController extends Controller
         }
 
         return $this->response('Dados cadastrados!', 200, new ArrecadacoesResource($created));
-
-
     }
 
     /**
@@ -72,6 +75,10 @@ class ArrecadacoesController extends Controller
      */
     public function update(Request $request, Arrecadacoes $arrecadacoes)
     {
+        if (!auth()->user()->tokenCan('arr-update')) {
+            return $this->error('Unauthorized', 403);
+        }
+
         // para validar a os dados da requisição do usuário
         $validator = Validator::make($request->all(), [
             'id' => 'required',
@@ -105,6 +112,10 @@ class ArrecadacoesController extends Controller
      */
     public function destroy(Arrecadacoes $arrecadacoes)
     {
+        if (!auth()->user()->tokenCan('arr-destroy')) {
+            return $this->error('Não autorizado!', 403);
+        }
+
         if (!$arrecadacoes) {
             return $this->error('Registro não encontrado!', 404);
         }
