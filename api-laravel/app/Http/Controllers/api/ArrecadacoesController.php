@@ -121,10 +121,8 @@ class ArrecadacoesController extends Controller
         );
     }
 
-    public function dashboard()
+    public function kpis()
     {
-        $anoAtual = date('Y');
-
         // Total arrecadado
         $totalArrecadado = Arrecadacoes::sum('valor');
 
@@ -137,21 +135,111 @@ class ArrecadacoesController extends Controller
             ->orderByDesc('total')
             ->first();
 
-        // Gráfico: arrecadação mensal do ano atual
-        $arrecadacaoMensal = Arrecadacoes::selectRaw('mes, SUM(valor) as total')
-            ->where('ano', $anoAtual)
-            ->groupBy('mes')
-            ->orderBy('mes', 'asc')
-            ->get();
+        return $this->response('Dados do dashboard', 200, [
+            'resumo' => [
+                'total_arrecadado' => $totalArrecadado,
+                'quantidade_registros' => $quantidadeRegistros,
+                'tributo_destaque' => [
+                    'nome' => $tributoDestaque->tributo ?? null,
+                    'valor' => $tributoDestaque->total ?? 0,
+                ],
+            ]
+        ]);
+    }
 
-        // Gráfico: arrecadação por tributo (distribuição)
-        $arrecadacaoPorTributo = Arrecadacoes::selectRaw('tributo, SUM(valor) as total')
+    /**
+     * Retorna dados consolidados do dashboard (KPIs e gráficos)
+     *
+     * Filtros disponíveis via query string:
+     * - ano_inicio / ano_fim → intervalo de anos
+     * - mes_inicio / mes_fim → intervalo de meses
+     * - tributo → único ou múltiplos tributos separados por vírgula
+     *
+     * Exemplos de uso:
+     *   /api/dashboard
+     *   /api/dashboard?ano_inicio=2023&ano_fim=2024
+     *   /api/dashboard?tributo=IPTU,ISS
+     *   /api/dashboard?ano_inicio=2023&mes_inicio=6&mes_fim=12&tributo=IPTU
+     */
+    public function dashboard(Request $request)
+    {
+        // filtros opcionais
+        $anoInicio = $request->query('ano_inicio');
+        $anoFim = $request->query('ano_fim');
+        $mesInicio = $request->query('mes_inicio');
+        $mesFim = $request->query('mes_fim');
+        $tributos = $request->query('tributo'); // pode ser string ou array
+        $anoAtual = date('Y');
+
+        // base da query com possíveis filtros
+        $query = Arrecadacoes::query();
+
+        // aplicar filtros dinâmicos
+        if ($anoInicio && $anoFim) {
+            $query->whereBetween('ano', [$anoInicio, $anoFim]);
+        } elseif ($anoInicio) {
+            $query->where('ano', '>=', $anoInicio);
+        } elseif ($anoFim) {
+            $query->where('ano', '<=', $anoFim);
+        }
+
+        if ($mesInicio && $mesFim) {
+            $query->whereBetween('mes', [$mesInicio, $mesFim]);
+        } elseif ($mesInicio) {
+            $query->where('mes', '>=', $mesInicio);
+        } elseif ($mesFim) {
+            $query->where('mes', '<=', $mesFim);
+        }
+
+        if ($tributos) {
+            $tributosArray = is_array($tributos)
+                ? $tributos
+                : explode(',', $tributos);
+            $query->whereIn('tributo', $tributosArray);
+        }
+
+        // total arrecadado e quantidade
+        $totalArrecadado = $query->clone()->sum('valor');
+        $quantidadeRegistros = $query->clone()->count();
+
+        // tributo destaque (maior arrecadação)
+        $tributoDestaque = $query->clone()
+            ->selectRaw('tributo, SUM(valor) as total')
+            ->groupBy('tributo')
+            ->orderByDesc('total')
+            ->first();
+
+        // arrecadação mensal (6 últimos meses, considerando filtros)
+        $arrecadacaoMensal = $query->clone()
+            ->selectRaw('ano, mes, SUM(valor) as total')
+            ->groupBy('ano', 'mes')
+            ->orderBy('ano', 'desc')
+            ->orderBy('mes', 'desc')
+            ->limit(6)
+            ->get()
+            ->sortBy(fn($item) => sprintf('%04d-%02d', $item->ano, $item->mes))
+            ->values();
+
+        // arrecadação por tributo (para gráfico)
+        $arrecadacaoPorTributo = $query->clone()
+            ->selectRaw('tributo, SUM(valor) as total')
             ->groupBy('tributo')
             ->orderBy('tributo', 'asc')
             ->get();
 
-        // Retorna tudo em um JSON organizado
+        // listagem das arrecadacoes
+        $arrecadacoes = $query->clone()->get(['id', 'tributo', 'ano', 'mes', 'valor']);
+
+
+        // retorna tudo em JSON
         return $this->response('Dados do dashboard', 200, [
+            'filtros' => [
+                'ano_inicio' => $anoInicio,
+                'ano_fim' => $anoFim,
+                'mes_inicio' => $mesInicio,
+                'mes_fim' => $mesFim,
+                'tributos' => $tributos ?? null,
+            ],
             'resumo' => [
                 'total_arrecadado' => $totalArrecadado,
                 'quantidade_registros' => $quantidadeRegistros,
@@ -164,12 +252,11 @@ class ArrecadacoesController extends Controller
                 'arrecadacao_mensal' => $arrecadacaoMensal,
                 'arrecadacao_por_tributo' => $arrecadacaoPorTributo,
             ],
+            'dados'=>[
+                'arrecadacoes' => $arrecadacoes,
+            ]
         ]);
     }
-
-
-
-
 
     //[... Métodos auxiliares...]
     private function existeArrecadacao($tributo, $mes, $ano)

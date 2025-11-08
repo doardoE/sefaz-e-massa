@@ -7,9 +7,11 @@ use App\Http\Controllers\api\ArrecadacoesController;
 //     return $request->$user();
 // });
 
+Route::get('arrecadacoes/kpis', [ArrecadacoesController::class, 'kpis']);
+Route::get('arrecadacoes/dashboard', [ArrecadacoesController::class, 'dashboard']);
 Route::get('/arrecadacoes', [ArrecadacoesController::class, 'index']);
 ROute::post('/arrecadacoes', [ArrecadacoesController::class, 'store']);
 Route::put('/arrecadacoes/{arrecadacoes}', [ArrecadacoesController::class, 'update']);
 Route::delete('/arrecadacoes/{arrecadacoes}', [ArrecadacoesController::class, 'destroy']);
 Route::get('/arrecadacoes/{arrecadacoes}', [ArrecadacoesController::class, 'show']);
-Route::get('arrecadacoes/kpis/dashboard', [ArrecadacoesController::class, 'dashboard']);
+
