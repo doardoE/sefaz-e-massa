@@ -3,13 +3,13 @@ import { Mail, Lock } from 'lucide-vue-next';
 </script>
 
 <template>
-    <section class="min-h-screen flex items-center justify-center bg-blue-700">
+    <section class="fixed inset-0 min-h-screen flex items-center justify-center bg-blue-700">
         <div class="w-full max-w-md">
             <!-- Logo e título -->
             <div class="text-center mb-8">
-                <a href="/" class="inline-flex items-center gap-3 mb-4"></a>
+                <router-link to="/" class="inline-flex items-center gap-3 mb-4"></router-link>
                 <h1 class="text-3xl font-bold text-white mb-2">Sefaz é Massa</h1>
-                <p class="text-white/80">Área Administrativa</p>
+                <p class="text-white/80">Acesso a Recursos Administrativos</p>
             </div>
 
             <!-- Card -->
@@ -52,9 +52,9 @@ import { Mail, Lock } from 'lucide-vue-next';
 
                     <!-- Link Voltar -->
                     <div class="text-center">
-                        <a href="/" class="text-sm text-gray-500 hover:text-blue-700 transition-colors">
+                        <router-link to="/" class="text-sm text-gray-500 hover:text-blue-700 transition-colors">
                             Voltar para o site
-                        </a>
+                        </router-link>
                     </div>
                 </form>
 

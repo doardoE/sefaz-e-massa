@@ -28,9 +28,9 @@
                     <h3 class="font-bold text-orange-700">LINKS ÚTEIS</h3>
                     <p class="bg-orange-700 w-1/3 h-2 mb-3"></p>
                     <ul class="space-y-2 text-sm text-gray-600">
-                        <li><a href="/" class="hover:text-blue-700 transition-colors">Início</a></li>
-                        <li><a href="/arrecadacoes" class="hover:text-blue-700 transition-colors">Arrecadações</a></li>
-                        <li><a href="/login" class="hover:text-blue-700 transition-colors">Área Administrativa</a></li>
+                        <li><router-link to="/" class="hover:text-blue-700 transition-colors">Início</router-link></li>
+                        <li><router-link to="/arrecadacoes" class="hover:text-blue-700 transition-colors">Arrecadações</router-link></li>
+                        <li><router-link to="/login" class="hover:text-blue-700 transition-colors">Área Administrativa</router-link></li>
                     </ul>
                 </div>
 

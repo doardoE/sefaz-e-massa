@@ -1,18 +1,18 @@
 <script setup>
-import Header from './components/pages/Header.vue';
-import Footer from './components/pages/Footer.vue';
-import HomePage from './components/pages/HomePage.vue';
-import Dashboard from './components/pages/Dashboard.vue';
-import Login from './components/pages/login.vue';
+import { useRoute } from 'vue-router'
+import { computed } from 'vue'
 
+import Header from './components/Header.vue'
+import Footer from './components/Footer.vue'
+
+const route = useRoute()
+
+// computed reativo → atualiza quando a rota muda
+const showLayout = computed(() => route.path !== '/login')
 </script>
 
 <template>
-
-  <Login></Login>
-  <Header></Header>
-  <HomePage></HomePage>
-  <Dashboard></Dashboard>
-  <Footer></Footer>
-
+  <Header v-if="showLayout"></Header>
+  <router-view />
+  <Footer v-if="showLayout"></Footer>
 </template>

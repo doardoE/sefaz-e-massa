@@ -17,11 +17,11 @@
                         atualizados e acessíveis para todos os cidadãos.
                     </p>
                     <div class="flex gap-4">
-                        <a href="/arrecadacoes"
+                        <router-link to="/arrecadacoes"
                             class="bg-white text-blue-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition flex items-center">
                             Ver Arrecadações
                             <ChevronRight class="ml-2 text-blue/700" />
-                        </a>
+                        </router-link>
                     </div>
                 </div>
             </div>
