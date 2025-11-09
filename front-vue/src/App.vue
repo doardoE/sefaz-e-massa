@@ -1,18 +1,13 @@
 <script setup>
+import Header from './components/Header.vue';
+import Footer from './components/Footer.vue';
 import { useRoute } from 'vue-router'
-import { computed } from 'vue'
-
-import Header from './components/Header.vue'
-import Footer from './components/Footer.vue'
 
 const route = useRoute()
-
-// computed reativo → atualiza quando a rota muda
-const showLayout = computed(() => route.path !== '/login')
 </script>
 
 <template>
-  <Header v-if="showLayout"></Header>
+  <Header v-if="!route.meta.hideLayout"></Header>
   <router-view />
-  <Footer v-if="showLayout"></Footer>
+  <Footer v-if="!route.meta.hideLayout"></Footer>
 </template>

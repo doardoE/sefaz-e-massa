@@ -1,5 +1,86 @@
 <script setup>
 import { Pencil, Trash2, Plus } from 'lucide-vue-next';
+import axios from 'axios';
+import { ref } from 'vue'
+import Modal from '../components/model.vue';
+
+const data = ref([]);
+const showModal = ref('');
+const isEditing = ref('');
+const dadoSelecionado = ref('');
+const isLogado = ref(!!localStorage.getItem('token'))
+
+function getDataDashBoard() {
+    // puxando os dados da API
+    axios.get('api/arrecadacoes/dashboard')
+        .then((response) => {
+            data.value = response.data.data
+        })
+        .catch((error) => {
+            if (error.response && error.response.data) {
+                alert(error.response.data.message)
+            } else {
+                alert(error)
+            }
+        });
+}
+getDataDashBoard()
+
+function deletar(id) {
+
+    if (confirm('Tem certeza que deseja deletar este registro?')) {
+        axios.delete(`api/arrecadacoes/${id}`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+                Accept: 'application/json'
+            }
+        })
+            .then(() => {
+                getDataDashBoard()
+            })
+            .catch((error) => {
+                console.error('Erro ao deletar:', error.response?.data || error.message)
+            })
+    }
+}
+
+// trnaformar o mês em nome
+const meses = {
+    0: '-',
+    1: 'Janeiro',
+    2: 'Fevereiro',
+    3: 'Março',
+    4: 'Abril',
+    5: 'Maio',
+    6: 'Junho',
+    7: 'Julho',
+    8: 'Agosto',
+    9: 'Setembro',
+    10: 'Outubro',
+    11: 'Novembro',
+    12: 'Dezembro'
+};
+
+const anos = [];
+
+let anoAtual = new Date().getFullYear();
+
+for (let i = anoAtual; i >= anoAtual - 6; i--) {
+    anos.push(i);
+}
+
+function abrirModal(item) {
+    dadoSelecionado.value = item;
+    showModal.value = true;
+    isEditing.value = true;
+}
+
+function novoRegistro() {
+    dadoSelecionado.value = null;
+    showModal.value = true;
+    isEditing.value = false;
+}
+
 </script>
 
 <template>
@@ -27,18 +108,18 @@ import { Pencil, Trash2, Plus } from 'lucide-vue-next';
                                 <label class="text-sm font-medium text-gray-700 block mb-1">Início</label>
                                 <select
                                     class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
-                                    <option>2025</option>
-                                    <option>2024</option>
-                                    <option>2023</option>
+                                    <option v-for="ano in anos" :key="ano" :value="ano">
+                                        {{ ano }}
+                                    </option>
                                 </select>
                             </div>
                             <div class="flex-1">
                                 <label class="text-sm font-medium text-gray-700 block mb-1">Fim</label>
                                 <select
                                     class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
-                                    <option>2025</option>
-                                    <option>2024</option>
-                                    <option>2023</option>
+                                    <option v-for="ano in anos" :key="ano" :value="ano">
+                                        {{ ano }}
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -52,20 +133,14 @@ import { Pencil, Trash2, Plus } from 'lucide-vue-next';
                                 <label class="text-sm font-medium text-gray-700 block mb-1">Início</label>
                                 <select
                                     class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
-                                    <option>Janeiro</option>
-                                    <option>Fevereiro</option>
-                                    <option>Março</option>
-                                    <option>Dezembro</option>
+                                    <option v-for="mes in meses">{{ mes }}</option>
                                 </select>
                             </div>
                             <div class="flex-1">
                                 <label class="text-sm font-medium text-gray-700 block mb-1">Fim</label>
                                 <select
                                     class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
-                                    <option>Janeiro</option>
-                                    <option>Fevereiro</option>
-                                    <option>Março</option>
-                                    <option>Dezembro</option>
+                                    <option v-for="mes in meses">{{ mes }}</option>
                                 </select>
                             </div>
                         </div>
@@ -110,7 +185,7 @@ import { Pencil, Trash2, Plus } from 'lucide-vue-next';
             <!-- Total Arrecadado -->
             <div class="bg-blue-600 text-white rounded-lg shadow-sm p-6 mb-8">
                 <h3 class="text-lg font-semibold">Total Arrecadado</h3>
-                <div class="text-4xl font-bold">R$ 12.345.678,90</div>
+                <div class="text-4xl font-bold">R$ {{ data.resumo.total_arrecadado }}</div>
             </div>
 
             <!-- Gráficos -->
@@ -131,9 +206,9 @@ import { Pencil, Trash2, Plus } from 'lucide-vue-next';
                 </div>
             </div>
 
-            
+
             <!-- Alerta de Administrador -->
-            <div class="m-8 p-4 border-l-4 border-blue-600 bg-blue-50 rounded-md shadow-sm">
+            <div v-if="isLogado" class="m-8 p-4 border-l-4 border-blue-600 bg-blue-50 rounded-md shadow-sm">
                 <h2 class="text-2xl font-semibold text-blue-800 mb-1">Acesso Administrativo</h2>
                 <p class="text-gray-700">
                     Você está autenticado como <span class="font-semibold">Administrador</span> e possui permissão para
@@ -143,8 +218,8 @@ import { Pencil, Trash2, Plus } from 'lucide-vue-next';
 
 
             <!-- Botão para cadastrar nova arrecadação -->
-            <div class="flex justify-end mt-8">
-                <button
+            <div v-if="isLogado" class="flex justify-end mt-8">
+                <button @click="novoRegistro"
                     class="flex items-center gap-2 bg-blue-700 py-3 px-6 rounded-md text-white font-semibold hover:bg-blue-800 transition">
                     <Plus class="w-5 h-5" />
                     Nova arrecadação
@@ -163,35 +238,40 @@ import { Pencil, Trash2, Plus } from 'lucide-vue-next';
                             <tr class="border-b border-gray-200 text-gray-500">
                                 <th class="text-left py-3 px-4">Tributo</th>
                                 <th class="text-left py-3 px-4">Mês</th>
-                                <th class="text-left py-3 px-4">Ano</th>
-                                <th class="text-left py-3 px-4">Valor</th>
-                                <th class="text-center py-3 px-4">Açoes</th>
+                                <th class="text-center py-3 px-4">Ano</th>
+                                <th class="text-center py-3 px-4">Valor</th>
+                                <th v-if="isLogado" class="text-center py-3 px-4">Açoes</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody v-for="dado in data.dados.arrecadacoes">
                             <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                <td class="py-3 px-4 font-medium">IPTU</td>
-                                <td class="py-3 px-4">Janeiro</td>
-                                <td class="py-3 px-4">2025</td>
-                                <td class="py-3 px-4  font-semibold">R$ 1.234.567,89</td>
+                                <td class="py-3 px-4 font-medium">{{ dado.tributo }}</td>
+                                <td class="py-3 px-4">{{ meses[dado.mes] }}</td>
+                                <td class="py-3 px-4 text-center">{{ dado.ano }}</td>
+                                <td class="py-3 px-4 text-center font-semibold">R$ {{ dado.valor }}</td>
                                 <td class="py-3 px-4 ">
-                                    <div class="flex gap-2 justify-center">
-                                        <div class="border border-3 p-2 rounded-md cursor-pointer hover:bg-green-700">
+                                    <div v-if="isLogado" class="flex gap-2 justify-center">
+                                        <div @click="abrirModal(dado)"
+                                            class="border border-3 p-2 rounded-md cursor-pointer hover:bg-green-700">
                                             <Pencil class="w-4 h-4" />
                                         </div>
 
-                                        <div class="bg-red-500 p-2 rounded-md cursor-pointer hover:bg-red-600">
+                                        <div @click="deletar(dado.id)"
+                                            class="bg-red-500 p-2 rounded-md cursor-pointer hover:bg-red-600">
                                             <Trash2 class="w-4 h-4 text-white" />
                                         </div>
                                     </div>
                                 </td>
                             </tr>
-
                         </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
     </main>
+
+    <!-- Modal -->
+    <Modal v-if="showModal" :data="dadoSelecionado" :showModal="showModal" @close="showModal = false"
+        :isEditing="isEditing" :getDataDashBoard="getDataDashBoard" />
+
 </template>

@@ -1,5 +1,48 @@
 <script setup>
-    import { BarChart3, LogOut } from 'lucide-vue-next';
+import { BarChart3, LogOut } from 'lucide-vue-next';
+import { ref, onMounted } from 'vue'
+import axios from 'axios';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+const isLogado = ref(!!localStorage.getItem('token'))
+
+// Atualiza também quando o componente monta
+onMounted(() => {
+    isLogado.value = !!localStorage.getItem('token')
+})
+
+function fazerLogout() {
+
+    const storedToken = ref(localStorage.getItem("token"));
+
+    if (!storedToken.value) {
+        console.warn('Nenhum token encontrado.');
+        return;
+    }
+
+    axios.post('api/logout', {}, {
+        headers: {
+            Authorization: `Bearer ${storedToken.value}`,
+            Accept: 'application/json'
+        }
+    }).then(() => {
+        // Remove token localmente
+        delete axios.defaults.headers.common['Authorization'];
+        localStorage.removeItem('token');
+        router.push('/login')
+    })
+        .catch((error) => {
+            if (error.response && error.response.data) {
+                alert(error.response.data.message);
+            } else {
+                alert('Erro inesperado');
+            }
+        });
+};
+
+
 </script>
 
 <template>
@@ -29,15 +72,15 @@
                         Arrecadações
                     </router-link>
 
-                    <button
+                    <button v-if="isLogado" @click="fazerLogout"
                         class="flex items-center border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-md px-3 py-1 text-sm transition-colors">
                         <LogOut class="h-4 w-4 mr-2" />
                         Sair
                     </button>
 
-                    <router-link to="/login">
+                    <router-link v-if="!isLogado" to="/login">
                         <button
-                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md px-3 py-1 transition-colors">
+                            class="bg-blue-600 hover:bg-blue-700 py-2 text-white text-sm rounded-md px-3 py-1 transition-colors">
                             Sessão de Administrador
                         </button>
                     </router-link>

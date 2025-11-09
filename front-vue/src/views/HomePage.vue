@@ -1,5 +1,22 @@
 <script setup>
-    import { DollarSign, ChevronRight, ArrowRight, Calculator } from 'lucide-vue-next';
+import { DollarSign, ChevronRight, ArrowRight, Calculator } from 'lucide-vue-next';
+import axios from 'axios';
+import { ref } from 'vue'
+
+const data = ref([]);
+
+axios.get('api/arrecadacoes/kpis')
+    .then((response) => {
+        data.value = response.data.data
+    })
+    .catch((error) => {
+        if (error.response && error.response.data) {
+                alert(error.response.data.message)
+            } else {
+                alert(error)
+            }
+    });
+
 </script>
 
 <template>
@@ -27,7 +44,6 @@
             </div>
         </section>
 
-
         <!-- KPIs -->
         <section class="py-8 bg-gray-50">
             <div class="container mx-auto px-8 grid gap-4 md:grid-cols-3 max-w-6xl">
@@ -37,25 +53,27 @@
                         <h3 class="text-sm font-medium text-gray-500">Total Arrecadado</h3>
                         <DollarSign class="text-blue-700" />
                     </div>
-                    <div class="text-2xl font-bold text-gray-900">R$ 12.450.000</div>
+                    <div class="text-2xl font-bold text-gray-900">R$ {{ data.resumo.total_arrecadado }}</div>
                     <p class="text-xs text-gray-500 mt-1">Acumulado em {{ new Date().getFullYear() }}</p>
                 </div>
 
                 <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
                     <div class="flex justify-between items-center mb-1">
-                        <h3 class="text-sm font-medium text-gray-500">Tributo Destaque</h3>
+                        <h3 class="text-sm font-medium text-gray-500">Tributo Destaque <span class="text-xs">({{ new
+                            Date().getFullYear() }})</span></h3>
                         <ArrowRight class="text-orange-700" />
                     </div>
-                    <div class="text-2xl font-bold text-gray-900">ISS</div>
-                    <p class="text-xs text-gray-500 mt-1">R$ 6.200.000</p>
+                    <div class="text-2xl font-bold text-gray-900">{{ data.resumo.tributo_destaque.nome }}</div>
+                    <p class="text-xs text-gray-500 mt-1">R$ {{ data.resumo.tributo_destaque.valor }}</p>
                 </div>
 
                 <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
                     <div class="flex justify-between items-center mb-1">
-                        <h3 class="text-sm font-medium text-gray-500">Registros</h3>
+                        <h3 class="text-sm font-medium text-gray-500">Registros <span class="text-xs">({{ new
+                            Date().getFullYear() }})</span></h3>
                         <Calculator class="text-green-500" />
                     </div>
-                    <div class="text-2xl font-bold text-gray-900">324</div>
+                    <div class="text-2xl font-bold text-gray-900">{{ data.resumo.quantidade_registros }}</div>
                     <p class="text-xs text-gray-500 mt-1">Lançamentos cadastrados</p>
                 </div>
 
