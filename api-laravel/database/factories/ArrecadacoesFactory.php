@@ -21,7 +21,7 @@ class ArrecadacoesFactory extends Factory
         do {
             $tributo = fake()->randomElement(['IPTU', 'ISS', 'ITBI']);
             $mes = fake()->numberBetween(1, 12);
-            $ano = fake()->numberBetween(2015, now()->year);
+            $ano = fake()->numberBetween(2020, now()->year);
 
             $chave = "{$tributo}-{$mes}-{$ano}";
         } while (in_array($chave, $combinacoesUsadas));

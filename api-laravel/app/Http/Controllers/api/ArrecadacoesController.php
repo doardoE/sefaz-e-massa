@@ -137,14 +137,19 @@ class ArrecadacoesController extends Controller
 
     public function kpis()
     {
-        // Total arrecadado
-        $totalArrecadado = Arrecadacoes::sum('valor');
+        $anoAtual = date('Y');
+
+        // total arrecadado no ano
+        $totalArrecadado = Arrecadacoes::where('ano', $anoAtual)
+            ->sum('valor');
 
         // Quantidade de registros
-        $quantidadeRegistros = Arrecadacoes::count();
+        $quantidadeRegistros = Arrecadacoes::where('ano', $anoAtual)
+            ->count();
 
         // Tributo destaque (maior arrecadação)
-        $tributoDestaque = Arrecadacoes::selectRaw('tributo, SUM(valor) as total')
+        $tributoDestaque = Arrecadacoes::select('tributo', \DB::raw('SUM(valor) as total'))
+            ->where('ano', $anoAtual)
             ->groupBy('tributo')
             ->orderByDesc('total')
             ->first();
