@@ -11,9 +11,50 @@ const isEditing = ref(false);
 const dadoSelecionado = ref(null);
 const isLogado = ref(!!localStorage.getItem('token'))
 
-function getDataDashBoard() {
+// Filtros
+
+const tributos = ref([]);
+const anoInicio = ref();
+const anoFim = ref();
+const mesInicio = ref();
+const mesFim = ref();
+
+const param = ref('')
+
+// fas string com os parâmetros
+function aplicarFiltros() {
+    let query = [''];
+
+    if (anoInicio.value) query.push(`ano_inicio=${anoInicio.value}`);
+    if (anoFim.value) query.push(`ano_fim=${anoFim.value}`);
+    if (mesInicio.value) query.push(`mes_inicio=${mesInicio.value}`);
+    if (mesFim.value) query.push(`mes_fim=${mesFim.value}`);
+    if (tributos.value.length > 0) query.push(`tributo=${tributos.value.join(',')}`);
+
+    param.value = query.join('&');
+    console.log(param.value)
+
+    getDataDashBoard(param.value);
+}
+
+// limpa os filtros
+function limparFiltros() {
+    anoInicio.value = null;
+    anoFim.value = null;
+    mesInicio.value = null;
+    mesFim.value = null;
+    tributos.value = []
+
+    getDataDashBoard();
+}
+
+// pega os dados da Api
+function getDataDashBoard(param) {
+    // se for passado parametros ele manda na requisição
+    const url = param ? `/api/arrecadacoes/dashboard?${param}` : `/api/arrecadacoes/dashboard`
+
     // puxando os dados da API
-    axios.get('api/arrecadacoes/dashboard')
+    axios.get(url)
         .then((response) => {
             data.value = response.data.data
 
@@ -63,7 +104,6 @@ function deletar(id) {
 
 // trnaformar o mês em nome
 const meses = {
-    0: '-',
     1: 'Janeiro',
     2: 'Fevereiro',
     3: 'Março',
@@ -187,18 +227,115 @@ function criarGraficoPizza(dados, canvasId) {
 <template>
     <main class="flex-1 py-8">
         <div class="container mx-auto px-12">
-
             <!-- Título -->
             <div class="mb-8">
                 <h2 class="text-3xl font-bold mb-2">Arrecadações Municipais</h2>
                 <p class="text-gray-600">Visualize e analise os dados de arrecadação por período e tributo</p>
             </div>
 
+
+
+
+            <!-- Filtros -->
+            <form @submit.prevent="aplicarFiltros()"
+                class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-10 w-full">
+                <h3 class="text-lg font-semibold mb-1 text-gray-800">Filtros</h3>
+                <p class="text-sm text-gray-500 mb-6">Selecione o período e os tributos para análise.</p>
+
+                <div class="grid md:grid-cols-3 gap-6 items-end">
+
+                    <!-- ano -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Ano</h4>
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                <label class="text-sm font-medium text-gray-700 block mb-1">Início</label>
+                                <input v-model="anoInicio" name="anoInicio" type="number"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200" />
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-sm font-medium text-gray-700 block mb-1">Fim</label>
+                                <input v-model="anoFim" name="anoFim" type="number"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- mês -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Mês</h4>
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                <label class="text-sm font-medium text-gray-700 block mb-1">Início</label>
+                                <select v-model="mesInicio"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
+                                    <option v-for="(mes, index) in meses" :key="index" :value="index">
+                                        {{ mes }}
+                                    </option>
+                                </select>
+
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-sm font-medium text-gray-700 block mb-1">Fim</label>
+                                <select v-model="mesFim"
+                                    class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
+                                    <option v-for="(mes, index) in meses" :key="index" :value="index">
+                                        {{ mes }}
+                                    </option>
+                                </select>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- tributos -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Tributos</h4>
+                        <div class="flex flex-col gap-2">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" v-model="tributos" value="IPTU"
+                                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-400" />
+                                <span class="text-sm text-gray-700">IPTU</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" v-model="tributos" value="ISS"
+                                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-400" />
+                                <span class="text-sm text-gray-700">ISS</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" v-model="tributos" value="ITBI"
+                                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-400" />
+                                <span class="text-sm text-gray-700">ITBI</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- botões -->
+                <div class="mt-6">
+                    <button type="submit"
+                        class="px-4 py-2 mr-3 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium rounded-md shadow-sm transition">
+                        Aplicar
+                    </button>
+                    <button type="button" @click="limparFiltros"
+                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md transition">
+                        Limpar
+                    </button>
+                </div>
+            </form>
+            <div>
+            </div>
+
+
+
+
             <!-- Total Arrecadado -->
             <div class="bg-blue-600 text-white rounded-lg shadow-sm p-6 mb-8">
                 <h3 class="text-lg font-semibold">Total Arrecadado em {{ new Date().getFullYear() }}</h3>
-                <div class="text-4xl font-bold">R$ {{ (data.resumo?.total_arrecadado ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
-</div>
+                <div class="text-4xl font-bold">R$ {{ (data.resumo?.total_arrecadado ?? 0).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2, maximumFractionDigits: 2
+                }) }}
+                </div>
             </div>
 
             <!-- Gráficos -->
@@ -224,7 +361,8 @@ function criarGraficoPizza(dados, canvasId) {
             <div v-if="isLogado" class="m-8 p-4 border-l-4 border-blue-600 bg-blue-50 rounded-md shadow-sm">
                 <h2 class="text-2xl font-semibold text-blue-800 mb-1">Acesso Administrativo</h2>
                 <p class="text-gray-700">
-                    Você está autenticado como <span class="font-semibold">Administrador</span> e possui permissão para
+                    Você está autenticado como <span class="font-semibold">Administrador</span> e possui permissão
+                    para
                     gerenciar os registros de arrecadações.
                 </p>
             </div>
@@ -261,7 +399,11 @@ function criarGraficoPizza(dados, canvasId) {
                                 <td class="py-3 px-4 font-medium">{{ dado.tributo }}</td>
                                 <td class="py-3 px-4">{{ meses[dado.mes] }}</td>
                                 <td class="py-3 px-4 text-center">{{ dado.ano }}</td>
-                                <td class="py-3 px-4 text-center font-semibold">R$ {{ (dado.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
+                                <td class="py-3 px-4 text-center font-semibold">R$ {{
+                                    (dado.valor).toLocaleString('pt-BR', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    }) }}</td>
                                 <td class="py-3 px-4 ">
                                     <div v-if="isLogado" class="flex gap-2 justify-center">
                                         <div @click="abrirModal(dado)"
