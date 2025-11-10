@@ -4,7 +4,7 @@
 <template>
     <!-- Imagem decorativa no topo do rodapé -->
     <div class="overflow-hidden">
-        <img src="../../../public/background-maceio.svg" alt="Fundo de Maceió" class="w-full translate-y-[5px]" />
+        <img src="/background-maceio.svg" alt="Fundo de Maceió" class="w-full translate-y-[5px]" />
     </div>
 
     <!-- Rodapé -->
