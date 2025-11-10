@@ -188,7 +188,7 @@ class ArrecadacoesController extends Controller
         $mesInicio = $request->query('mes_inicio');
         $mesFim = $request->query('mes_fim');
         $tributos = $request->query('tributo'); // pode ser string ou array
-        $anoAtual = date('Y');
+        $anoAtual = now()->year;
 
         // base da query com possíveis filtros
         $query = Arrecadacoes::query();
@@ -218,20 +218,19 @@ class ArrecadacoesController extends Controller
         }
 
         // total arrecadado e quantidade
-        $totalArrecadado = $query->clone()->where('ano', $anoAtual)
+        $totalArrecadado = (clone $query)
+            ->where('ano', $anoAtual)
             ->sum('valor');
-        $quantidadeRegistros = $query->clone()->count();
 
+        $quantidadeRegistros = (clone $query)->count();
 
-        // tributo destaque (maior arrecadação)
-        $tributoDestaque = $query->clone()
+        $tributoDestaque = (clone $query)
             ->selectRaw('tributo, SUM(valor) as total')
             ->groupBy('tributo')
             ->orderByDesc('total')
             ->first();
 
-        // arrecadação mensal (6 últimos meses, considerando filtros)
-        $arrecadacaoMensal = $query->clone()
+        $arrecadacaoMensal = (clone $query)
             ->selectRaw('ano, mes, SUM(valor) as total')
             ->groupBy('ano', 'mes')
             ->orderBy('ano', 'desc')
@@ -241,16 +240,16 @@ class ArrecadacoesController extends Controller
             ->sortBy(fn($item) => sprintf('%04d-%02d', $item->ano, $item->mes))
             ->values();
 
-        // arrecadação por tributo (para gráfico)
-        $arrecadacaoPorTributo = $query->clone()
+        $arrecadacaoPorTributo = (clone $query)
             ->selectRaw('tributo, SUM(valor) as total')
             ->groupBy('tributo')
             ->orderBy('tributo', 'asc')
             ->get();
 
-        // listagem das arrecadacoes
-        $arrecadacoes = $query->clone()->get(['id', 'tributo', 'ano', 'mes', 'valor']);
-
+        $arrecadacoes = (clone $query)
+            ->orderBy('ano', 'desc')
+            ->orderBy('mes', 'desc')
+            ->get(['id', 'tributo', 'ano', 'mes', 'valor']);
 
         // retorna tudo em JSON
         return $this->response('Dados do dashboard', 200, [
