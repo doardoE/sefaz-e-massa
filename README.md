@@ -55,7 +55,7 @@ Copie o arquivo .env.example e renomeie para .env:
 ```bash
 cp .env.example .env
 ```
-Em  `api/laravel/database` criar o arquivo `database.sqlite`
+Em  `api-laravel/database` criar o arquivo `database.sqlite`
 ```bash
 type > database.sqlite
 ```
@@ -66,7 +66,7 @@ php artisan migrate:fresh --seed
 php artisan key:generate
 ```
 ### 5️⃣ Executar back-end
-O servidor será iniciado em: 👉 `http://localhost:8000/api`
+O servidor será iniciado em: 👉 `http://localhost:8000`
 ```bash
 php artisan serve
 ```
