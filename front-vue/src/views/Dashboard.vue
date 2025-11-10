@@ -12,7 +12,6 @@ const dadoSelecionado = ref(null);
 const isLogado = ref(!!localStorage.getItem('token'))
 
 // Filtros
-
 const tributos = ref([]);
 const anoInicio = ref();
 const anoFim = ref();
@@ -74,7 +73,6 @@ function getDataDashBoard(param) {
             }
         });
 }
-
 
 onMounted(() => {
     getDataDashBoard()
@@ -221,20 +219,17 @@ function criarGraficoPizza(dados, canvasId) {
         }
     });
 }
-
 </script>
 
 <template>
     <main class="flex-1 py-8">
         <div class="container mx-auto px-12">
+
             <!-- Título -->
             <div class="mb-8">
                 <h2 class="text-3xl font-bold mb-2">Arrecadações Municipais</h2>
                 <p class="text-gray-600">Visualize e analise os dados de arrecadação por período e tributo</p>
             </div>
-
-
-
 
             <!-- Filtros -->
             <form @submit.prevent="aplicarFiltros()"
@@ -243,7 +238,6 @@ function criarGraficoPizza(dados, canvasId) {
                 <p class="text-sm text-gray-500 mb-6">Selecione o período e os tributos para análise.</p>
 
                 <div class="grid md:grid-cols-3 gap-6 items-end">
-
                     <!-- ano -->
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                         <h4 class="text-sm font-semibold text-gray-700 mb-3">Ano</h4>
@@ -273,7 +267,6 @@ function criarGraficoPizza(dados, canvasId) {
                                         {{ mes }}
                                     </option>
                                 </select>
-
                             </div>
                             <div class="flex-1">
                                 <label class="text-sm font-medium text-gray-700 block mb-1">Fim</label>
@@ -283,7 +276,6 @@ function criarGraficoPizza(dados, canvasId) {
                                         {{ mes }}
                                     </option>
                                 </select>
-
                             </div>
                         </div>
                     </div>
@@ -323,15 +315,10 @@ function criarGraficoPizza(dados, canvasId) {
                     </button>
                 </div>
             </form>
-            <div>
-            </div>
-
-
-
-
+            
             <!-- Total Arrecadado -->
             <div class="bg-blue-600 text-white rounded-lg shadow-sm p-6 mb-8">
-                <h3 class="text-lg font-semibold">Total Arrecadado em {{ new Date().getFullYear() }}</h3>
+                <h3 class="text-lg font-semibold">Total Arrecadado</h3>
                 <div class="text-4xl font-bold">R$ {{ (data.resumo?.total_arrecadado ?? 0).toLocaleString('pt-BR', {
                     minimumFractionDigits: 2, maximumFractionDigits: 2
                 }) }}
@@ -356,7 +343,6 @@ function criarGraficoPizza(dados, canvasId) {
                 </div>
             </div>
 
-
             <!-- Alerta de Administrador -->
             <div v-if="isLogado" class="m-8 p-4 border-l-4 border-blue-600 bg-blue-50 rounded-md shadow-sm">
                 <h2 class="text-2xl font-semibold text-blue-800 mb-1">Acesso Administrativo</h2>
@@ -367,7 +353,6 @@ function criarGraficoPizza(dados, canvasId) {
                 </p>
             </div>
 
-
             <!-- Botão para cadastrar nova arrecadação -->
             <div v-if="isLogado" class="flex justify-end mt-8">
                 <button @click="novoRegistro"
@@ -376,7 +361,6 @@ function criarGraficoPizza(dados, canvasId) {
                     Nova arrecadação
                 </button>
             </div>
-
 
             <!-- Tabela -->
             <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mt-8">
