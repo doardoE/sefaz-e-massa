@@ -13,7 +13,7 @@ Este projeto é dividido em duas partes integradas:
 ```bash
   #Backend                            #Frontend
 - Laravel 12                        - Vue 3   
-- PHP 8.2+                          - Tailwind CSS 
+- PHP 8.4.14                        - Tailwind CSS 
 - Sanctum (autenticação leve)       - Axios  
 - SQLite                            - Chart.js 
 ```
@@ -23,7 +23,7 @@ Este projeto é dividido em duas partes integradas:
 ## ⚙️ Requisitos
 Antes de começar, garanta que você tem:
 ```bash
-- PHP ≥ 8.2
+- PHP ≥ 8.2+
 - Composer
 - Node.js ≥ 18
 - npm
@@ -38,47 +38,62 @@ Antes de começar, garanta que você tem:
 ```bash
 # via HTTPS
 git clone https://github.com/doardoE/sefaz-e-massa.git
-
-# ou via SSH
+```
+```bash
+# via SSH
 git clone git@github.com:doardoE/sefaz-e-massa.git
-
-cd sefaz-e-massa
 ```
 
-### 2️⃣ Instalar dependências
+### 2️⃣ Instalar dependências do back-end e configurar ambiente
 🧩 Backend
 ```bash
+cd sefaz-e-massa/api-laravel
 composer install
 ```
-💻 Frontend
-```bash
-npm install
-```
-
-### 3️⃣ Configurar o ambiente
-
 Copie o arquivo .env.example e renomeie para .env:
 ```bash
 cp .env.example .env
 ```
-
-### 4️⃣ Executar migrações e seeders
+Em  `api/laravel/database` criar o arquivo `database.sqlite`
 ```bash
-php artisan migrate:fresh --seed
+type > database.sqlite
 ```
 
+### 4️⃣ Executar migrações e seeders e gerar chave de aplicação
+```bash
+php artisan migrate:fresh --seed
+php artisan key:generate
+```
 ### 5️⃣ Executar back-end
-O servidor será iniciado em: 👉 http://localhost:8000/api
+O servidor será iniciado em: 👉 `http://localhost:8000/api`
 ```bash
 php artisan serve
 ```
+### 3️⃣ Instalar dependências do front-end e configurar ambiente
+
+Em outra interface de linha de comando, entrar no diretóro /sefaz-e-massa/front-vue e executar:
+
+💻 Frontend
+```bash
+npm install
+npm run build
+npm run preview
+```
 
 ### 6️⃣ Executar front-end com vite
-O servidor será iniciado em: 👉 http://localhost:4173
+O servidor será iniciado em: 👉 `http://localhost:4173`
 ```bash
 npm run build
 npm run preview
 ```
+> ## ⚠️ **Observação:**  
+> Caso a API Laravel seja executada em outra porta, é necessário atualizar a configuração de URL no front-end:
+>
+>💻 Frontend `front-vue/src/plugins/axios.js`
+> ```javascript
+> axios.defaults.baseURL = 'http://localhost:0000' // substitua 0000 pela porta correta
+> ```
+
 
 ### ⚡ Funcionalidades Principais
 ```bash
