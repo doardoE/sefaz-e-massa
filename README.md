@@ -35,19 +35,20 @@ Antes de começar, garanta que você tem:
 
 ### 1️⃣ Clonar o projeto
 
+#### via HTTPS
 ```bash
-# via HTTPS
 git clone https://github.com/doardoE/sefaz-e-massa.git
+cd sefaz-e-massa/api-laravel
 ```
+#### via SSH
 ```bash
-# via SSH
 git clone git@github.com:doardoE/sefaz-e-massa.git
+cd sefaz-e-massa/api-laravel
 ```
 
 ### 2️⃣ Instalar dependências do back-end e configurar ambiente
 🧩 Backend
 ```bash
-cd sefaz-e-massa/api-laravel
 composer install
 ```
 Copie o arquivo .env.example e renomeie para .env:
