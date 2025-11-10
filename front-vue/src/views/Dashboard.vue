@@ -1,13 +1,14 @@
 <script setup>
 import { Pencil, Trash2, Plus } from 'lucide-vue-next';
 import axios from 'axios';
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import Modal from '../components/model.vue';
+import Chart from 'chart.js/auto'
 
-const data = ref([]);
-const showModal = ref('');
-const isEditing = ref('');
-const dadoSelecionado = ref('');
+const data = ref({});
+const showModal = ref(false);
+const isEditing = ref(false);
+const dadoSelecionado = ref(null);
 const isLogado = ref(!!localStorage.getItem('token'))
 
 function getDataDashBoard() {
@@ -15,6 +16,14 @@ function getDataDashBoard() {
     axios.get('api/arrecadacoes/dashboard')
         .then((response) => {
             data.value = response.data.data
+
+            // Cria o gráfico após garantir que o DOM e os dados estão prontos
+            if (data.value.graficos?.arrecadacao_mensal?.length) {
+                criarGraficoBarras(data.value.graficos.arrecadacao_mensal, 'barChart')
+            }
+            if (data.value.graficos?.arrecadacao_por_tributo?.length) {
+                criarGraficoPizza(data.value.graficos.arrecadacao_por_tributo, 'pieChart');
+            }
         })
         .catch((error) => {
             if (error.response && error.response.data) {
@@ -24,7 +33,11 @@ function getDataDashBoard() {
             }
         });
 }
-getDataDashBoard()
+
+
+onMounted(() => {
+    getDataDashBoard()
+})
 
 function deletar(id) {
 
@@ -39,8 +52,12 @@ function deletar(id) {
                 getDataDashBoard()
             })
             .catch((error) => {
-                console.error('Erro ao deletar:', error.response?.data || error.message)
-            })
+                if (error.response && error.response.data) {
+                    alert(error.response.data.message)
+                } else {
+                    alert(error)
+                }
+            });
     }
 }
 
@@ -81,6 +98,90 @@ function novoRegistro() {
     isEditing.value = false;
 }
 
+const barChartInstance = ref(null);
+const pieChartInstance = ref(null);
+
+function criarGraficoBarras(dados, canvasId) {
+    // se já existe um gráfico de barras, destrói antes de criar outro
+    if (barChartInstance.value) {
+        try {
+            barChartInstance.value.destroy();
+        } catch (e) {
+            console.warn('Erro ao destruir gráfico de barras:', e);
+        }
+    }
+
+    const ctx = document.getElementById(canvasId);
+
+    barChartInstance.value = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dados.map(row => meses[row.mes]),
+            datasets: [{
+                label: 'Arrecadação Mensal (R$)',
+                data: dados.map(row => row.total),
+                backgroundColor: '#3B82F6',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `R$ ${ctx.raw.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (value) => 'R$ ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+                    }
+                }
+            }
+        }
+    });
+}
+
+function criarGraficoPizza(dados, canvasId) {
+    // se já existe um gráfico de pizza, destrói antes de criar outro
+    if (pieChartInstance.value) {
+        try {
+            pieChartInstance.value.destroy();
+        } catch (e) {
+            console.warn('Erro ao destruir gráfico de pizza:', e);
+        }
+    }
+
+    const ctx = document.getElementById(canvasId);
+
+    pieChartInstance.value = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: dados.map(row => row.tributo),
+            datasets: [{
+                data: dados.map(row => row.total),
+                backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `${ctx.label}: R$ ${ctx.raw.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                    }
+                }
+            }
+        }
+    });
+}
+
 </script>
 
 <template>
@@ -93,115 +194,27 @@ function novoRegistro() {
                 <p class="text-gray-600">Visualize e analise os dados de arrecadação por período e tributo</p>
             </div>
 
-            <!-- Filtros -->
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-10 w-full">
-                <h3 class="text-lg font-semibold mb-1 text-gray-800">Filtros</h3>
-                <p class="text-sm text-gray-500 mb-6">Selecione o período e os tributos para análise.</p>
-
-                <div class="grid md:grid-cols-3 gap-6 items-end">
-
-                    <!-- ano -->
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Ano</h4>
-                        <div class="flex gap-3">
-                            <div class="flex-1">
-                                <label class="text-sm font-medium text-gray-700 block mb-1">Início</label>
-                                <select
-                                    class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
-                                    <option v-for="ano in anos" :key="ano" :value="ano">
-                                        {{ ano }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="flex-1">
-                                <label class="text-sm font-medium text-gray-700 block mb-1">Fim</label>
-                                <select
-                                    class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
-                                    <option v-for="ano in anos" :key="ano" :value="ano">
-                                        {{ ano }}
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- mês -->
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Mês</h4>
-                        <div class="flex gap-3">
-                            <div class="flex-1">
-                                <label class="text-sm font-medium text-gray-700 block mb-1">Início</label>
-                                <select
-                                    class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
-                                    <option v-for="mes in meses">{{ mes }}</option>
-                                </select>
-                            </div>
-                            <div class="flex-1">
-                                <label class="text-sm font-medium text-gray-700 block mb-1">Fim</label>
-                                <select
-                                    class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200">
-                                    <option v-for="mes in meses">{{ mes }}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- tributos -->
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Tributos</h4>
-                        <div class="flex flex-col gap-2">
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox"
-                                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-400">
-                                <span class="text-sm text-gray-700">IPTU</span>
-                            </label>
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox"
-                                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-400">
-                                <span class="text-sm text-gray-700">ISS</span>
-                            </label>
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox"
-                                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-400">
-                                <span class="text-sm text-gray-700">ITBI</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- botões -->
-                <div class="mt-3">
-                    <button
-                        class="px-4 py-2 mr-3 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium rounded-md shadow-sm transition">
-                        Aplicar
-                    </button>
-                    <button
-                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md transition">
-                        Limpar
-                    </button>
-                </div>
-            </div>
-
             <!-- Total Arrecadado -->
             <div class="bg-blue-600 text-white rounded-lg shadow-sm p-6 mb-8">
                 <h3 class="text-lg font-semibold">Total Arrecadado</h3>
-                <div class="text-4xl font-bold">R$ {{ data.resumo.total_arrecadado }}</div>
+                <div class="text-4xl font-bold">R$ {{ (data.resumo?.total_arrecadado ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+</div>
             </div>
 
             <!-- Gráficos -->
             <div class="grid gap-8 lg:grid-cols-2">
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
                     <h4 class="font-semibold mb-1">Arrecadação por Mês</h4>
-                    <p class="text-sm text-gray-500 mb-4">Evolução mensal das arrecadações</p>
-                    <div class="h-60 bg-gray-100 rounded flex items-center justify-center text-gray-400">
-                        [Gráfico de Barras]
+                    <p class="text-sm text-gray-500 mb-4">Arrecadação dos últimos 6 meses registrados</p>
+                    <div class="h-60">
+                        <canvas id="barChart"></canvas>
                     </div>
                 </div>
                 <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
                     <h4 class="font-semibold mb-1">Distribuição por Tributo</h4>
                     <p class="text-sm text-gray-500 mb-4">Participação de cada tributo no total</p>
-                    <div class="h-60 bg-gray-100 rounded flex items-center justify-center text-gray-400">
-                        [Gráfico de Pizza]
+                    <div class="h-60 mt-8 flex items-center justify-center">
+                        <canvas id="pieChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -243,12 +256,12 @@ function novoRegistro() {
                                 <th v-if="isLogado" class="text-center py-3 px-4">Açoes</th>
                             </tr>
                         </thead>
-                        <tbody v-for="dado in data.dados.arrecadacoes">
+                        <tbody v-if="data.dados?.arrecadacoes" v-for="dado in data.dados.arrecadacoes">
                             <tr class="border-b border-gray-100 hover:bg-gray-50">
                                 <td class="py-3 px-4 font-medium">{{ dado.tributo }}</td>
                                 <td class="py-3 px-4">{{ meses[dado.mes] }}</td>
                                 <td class="py-3 px-4 text-center">{{ dado.ano }}</td>
-                                <td class="py-3 px-4 text-center font-semibold">R$ {{ dado.valor }}</td>
+                                <td class="py-3 px-4 text-center font-semibold">R$ {{ (dado.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
                                 <td class="py-3 px-4 ">
                                     <div v-if="isLogado" class="flex gap-2 justify-center">
                                         <div @click="abrirModal(dado)"

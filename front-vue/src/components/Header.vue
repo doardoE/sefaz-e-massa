@@ -78,7 +78,7 @@ function fazerLogout() {
                         Sair
                     </button>
 
-                    <router-link v-if="!isLogado" to="/login">
+                    <router-link to="/login">
                         <button
                             class="bg-blue-600 hover:bg-blue-700 py-2 text-white text-sm rounded-md px-3 py-1 transition-colors">
                             Sessão de Administrador
