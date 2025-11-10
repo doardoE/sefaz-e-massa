@@ -17,7 +17,20 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::factory(1)->create();
-        Arrecadacoes::factory(20)->create();
 
+        $tributos = ['IPTU', 'ISS', 'ITBI'];
+        $ano = now()->year;
+        $mesAtual = now()->month;
+
+        foreach ($tributos as $tributo) {
+            foreach (range(1, $mesAtual) as $mes) {
+                Arrecadacoes::factory()->create([
+                    'tributo' => $tributo,
+                    'mes' => $mes,
+                    'ano' => $ano,
+                    'valor' => fake()->randomFloat(2, 999, 100000)
+                ]);
+            }
+        }
     }
 }
