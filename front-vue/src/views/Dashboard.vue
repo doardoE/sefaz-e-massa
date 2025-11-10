@@ -196,7 +196,7 @@ function criarGraficoPizza(dados, canvasId) {
 
             <!-- Total Arrecadado -->
             <div class="bg-blue-600 text-white rounded-lg shadow-sm p-6 mb-8">
-                <h3 class="text-lg font-semibold">Total Arrecadado</h3>
+                <h3 class="text-lg font-semibold">Total Arrecadado em {{ new Date().getFullYear() }}</h3>
                 <div class="text-4xl font-bold">R$ {{ (data.resumo?.total_arrecadado ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
 </div>
             </div>
