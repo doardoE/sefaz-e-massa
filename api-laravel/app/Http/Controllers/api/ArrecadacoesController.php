@@ -218,8 +218,10 @@ class ArrecadacoesController extends Controller
         }
 
         // total arrecadado e quantidade
-        $totalArrecadado = $query->clone()->sum('valor');
+        $totalArrecadado = $query->clone()->where('ano', $anoAtual)
+            ->sum('valor');
         $quantidadeRegistros = $query->clone()->count();
+
 
         // tributo destaque (maior arrecadação)
         $tributoDestaque = $query->clone()
