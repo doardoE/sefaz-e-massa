@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
 
         foreach ($tributos as $tributo) {
             foreach (range(1, $mesAtual) as $mes) {
-                Arrecadacoes::factory()->create([
+                Arrecadacoes::create([
                     'tributo' => $tributo,
                     'mes' => $mes,
                     'ano' => $ano,
