@@ -2,32 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-// 3|rFEqqkcCiNSyF7Mclx18n9GXv0OoW56ylNYfzXSJdc2a9f8f
 class AuthController extends Controller
 {
-    use HttpResponses;
 
-    public function login(Request $request){
+    public function login(Request $request)
+    {
         if(Auth::attempt($request->only(['email', 'password']))) {
-            return $this->response('Autorizado!', 200, [
-                'token' => Auth::user()->createToken('API Token', [
-                    'arr-store',
-                    'arr-update',
-                    'arr-destroy'
-                ])->plainTextToken
-            ]);
+            return response()->json([
+                'message' => 'Autorizado!',
+                'data' => [
+                    'token' => Auth::user()->createToken('API Token', [
+                        'arr-store',
+                        'arr-update',
+                        'arr-destroy'
+                    ])->plainTextToken
+                ]
+            ], 200);
+
         };
-        return $this->response('Não autorizado!', 403);
+        return response()->json('Não autorizado!', 403);
 
     }
 
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         $request->user()->currentAccessToken()->delete();
-        return $this->response('Token Revogado', 200);
+        return response()->json('Token Revogado', 200);
     }
+
+    public function checkToken(Request $request)
+    {
+        return response()->json([
+            'valid' => true,
+        ], 200);
+    }
+
 
 }

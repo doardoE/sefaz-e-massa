@@ -1,20 +1,22 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Http\Resources\api\ArrecadacoesResource;
+use App\Http\Requests\ArrecadacaoRequest;
+use App\Http\Resources\ArrecadacoesResource;
 use App\Models\Arrecadacoes;
+use App\Services\ArrecadacoesService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use App\Traits\HttpResponses;
 
 class ArrecadacoesController extends Controller
 {
-    // traits para responde de erro ou sucess
-    use HttpResponses;
 
+    private ArrecadacoesService $service;
 
+    public function __construct(ArrecadacoesService $service)
+    {
+        $this->service = $service;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -27,38 +29,15 @@ class ArrecadacoesController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ArrecadacaoRequest $request)
     {
-        if (!auth()->user()->tokenCan('arr-store')) {
-            return $this->error('Não autorizado!', 403);
-        }
+        // chama service para criar arrecadação
+        $created = $this->service->store($request->validated());;
 
-        // para validar a os dados da requisição do usuário
-        $validator = Validator::make($request->all(), [
-            'tributo' => 'required|string|in:' . implode(',', Arrecadacoes::TRIBUTOS),
-            'mes' => 'required|numeric|between:1,12',
-            'ano' => 'required|numeric|min:2015|max:'.date('Y'),
-            'valor' => 'required|numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->error('Dados incompletos ou inválidos!', 422, (array)$validator->errors());
-        }
-
-        if ($this->existeArrecadacao($request->tributo, $request->mes, $request->ano)) {
-            return $this->error('Já existe um registro para este tributo, mês e ano!', 409);
-        }
-        if ($this->verificarDataMaior($request->mes, $request->ano)){
-            return $this->error('Não é possível adicionar tributo para datas futuras!', 400);
-        }
-
-        // Cria a arrecadação no banco de dados
-        $created = Arrecadacoes::create($validator->validated());
-        if(!$created){
-            return $this->error('Erro ao cadastrar!', 400);
-        }
-
-        return $this->response('Dados cadastrados!', 200, new ArrecadacoesResource($created));
+        return response()->json([
+            'message' => 'Dados cadastrados.',
+            'data' => new ArrecadacoesResource($created),
+        ], 201);
     }
 
     /**
@@ -73,67 +52,27 @@ class ArrecadacoesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Arrecadacoes $arrecadacoes)
+    public function update(ArrecadacaoRequest $request, Arrecadacoes $arrecadacoes)
     {
-        if (!auth()->user()->tokenCan('arr-update')) {
-            return $this->error('Unauthorized', 403);
-        }
+        $updated = $this->service->update($arrecadacoes, $request->validated());
 
-        // para validar a os dados da requisição do usuário
-        $validator = Validator::make($request->all(), [
-            'tributo' => 'required|string|in:' . implode(',', Arrecadacoes::TRIBUTOS),
-            'mes' => 'required|numeric|between:1,12',
-            'ano' => 'required|numeric|min:2015|max:'.date('Y'),
-            'valor' => 'required|numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->error('Dados inválidos!', 422, (array)$validator->errors());
-        }
-
-        if ($this->verificarDataMaior($request->mes, $request->ano)){
-            return $this->error('Não é possível atualizar tributo para datas futuras!', 400);
-        }
-
-        if ($this->existeArrecadacao($request->tributo, $request->mes, $request->ano, $request->id)) {
-            return $this->error('Já existe um registro para este tributo, mês e ano!', 409);
-        }
-
-        $validated = $validator->validated();
-
-        $updated = $arrecadacoes->update($validated);
-
-        if(!$updated){
-            return $this->error('Erro ao atualizar!', 400);
-        }
-
-        return $this->response('Dados atualizados com sucesso!', 200, new ArrecadacoesResource($arrecadacoes));
+        return response()->json([
+            'message' => 'Dados atualizados com sucesso!',
+            'data' => new ArrecadacoesResource($updated),
+        ], 200);
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(Arrecadacoes $arrecadacoes)
     {
-        if (!auth()->user()->tokenCan('arr-destroy')) {
-            return $this->error('Não autorizado!', 403);
-        }
+        $this->service->destroy($arrecadacoes);
 
-        if (!$arrecadacoes) {
-            return $this->error('Registro não encontrado!', 404);
-        }
-
-        $deleted = $arrecadacoes->delete();
-        if (!$deleted) {
-            return $this->error('Erro ao deletar!', 500);
-        }
-
-        return $this->response(
-            'Tributo deletado com sucesso!',
-            200,
-            new ArrecadacoesResource($arrecadacoes)
-        );
+        return response()->noContent();
     }
+
 
     public function kpis()
     {
@@ -154,7 +93,8 @@ class ArrecadacoesController extends Controller
             ->orderByDesc('total')
             ->first();
 
-        return $this->response('Dados do dashboard', 200, [
+        return response()->json([
+            'message' => 'Dados dos KPIs',
             'resumo' => [
                 'total_arrecadado' => $totalArrecadado,
                 'quantidade_registros' => $quantidadeRegistros,
@@ -163,7 +103,8 @@ class ArrecadacoesController extends Controller
                     'valor' => $tributoDestaque->total ?? 0,
                 ],
             ]
-        ]);
+        ], 200);
+
     }
 
     /**
@@ -188,7 +129,6 @@ class ArrecadacoesController extends Controller
         $mesInicio = $request->query('mes_inicio');
         $mesFim = $request->query('mes_fim');
         $tributos = $request->query('tributo'); // pode ser string ou array
-        $anoAtual = now()->year;
 
         // base da query com possíveis filtros
         $query = Arrecadacoes::query();
@@ -219,7 +159,6 @@ class ArrecadacoesController extends Controller
 
         // total arrecadado e quantidade
         $totalArrecadado = (clone $query)
-            ->where('ano', $anoAtual)
             ->sum('valor');
 
         $quantidadeRegistros = (clone $query)->count();
@@ -252,7 +191,8 @@ class ArrecadacoesController extends Controller
             ->get(['id', 'tributo', 'ano', 'mes', 'valor']);
 
         // retorna tudo em JSON
-        return $this->response('Dados do dashboard', 200, [
+        return response()->json(
+            ['message' => 'Dados do dashboard',
             'filtros' => [
                 'ano_inicio' => $anoInicio,
                 'ano_fim' => $anoFim,
@@ -276,37 +216,6 @@ class ArrecadacoesController extends Controller
                 'arrecadacoes' => $arrecadacoes,
             ]
         ]);
-    }
-
-    //[... Métodos auxiliares...]
-    private function existeArrecadacao($tributo, $mes, $ano, $id = null)
-    {
-        return Arrecadacoes::where('tributo', $tributo)
-            ->where('mes', $mes)
-            ->where('ano', $ano)
-            ->when($id, function ($query, $id) {
-                $query->where('id', '!=', $id);
-            })
-            ->exists();
-    }
-
-
-    private function verificarDataMaior($mes, $ano)
-    {
-        $mesAtual = date('m');
-        $anoAtual = date('Y');
-
-        // se o ano for maior que o atual
-        if ($ano > $anoAtual) {
-            return true;
-        }
-
-        // se o ano for o mesmo, mas o mês for maior que o atual
-        if ($ano == $anoAtual && $mes > $mesAtual) {
-            return true;
-        }
-
-        return false;
     }
 
 }
