@@ -55,14 +55,14 @@ function getDataDashBoard(param) {
     // puxando os dados da API
     axios.get(url)
         .then((response) => {
-            data.value = response.data.data
+            data.value = response.data
 
             // Cria o gráfico após garantir que o DOM e os dados estão prontos
-            if (data.value.graficos?.arrecadacao_mensal?.length) {
-                criarGraficoBarras(data.value.graficos.arrecadacao_mensal, 'barChart')
+            if (data.value?.graficos?.arrecadacao_mensal?.length) {
+                criarGraficoBarras(data?.value?.graficos.arrecadacao_mensal, 'barChart')
             }
-            if (data.value.graficos?.arrecadacao_por_tributo?.length) {
-                criarGraficoPizza(data.value.graficos.arrecadacao_por_tributo, 'pieChart');
+            if (data.value?.graficos?.arrecadacao_por_tributo?.length) {
+                criarGraficoPizza(data?.value?.graficos.arrecadacao_por_tributo, 'pieChart');
             }
         })
         .catch((error) => {
@@ -319,7 +319,7 @@ function criarGraficoPizza(dados, canvasId) {
             <!-- Total Arrecadado -->
             <div class="bg-blue-600 text-white rounded-lg shadow-sm p-6 mb-8">
                 <h3 class="text-lg font-semibold">Total Arrecadado</h3>
-                <div class="text-4xl font-bold">R$ {{ (data.resumo?.total_arrecadado ?? 0).toLocaleString('pt-BR', {
+                <div class="text-4xl font-bold">R$ {{ (data?.resumo?.total_arrecadado ?? 0).toLocaleString('pt-BR', {
                     minimumFractionDigits: 2, maximumFractionDigits: 2
                 }) }}
                 </div>
@@ -378,7 +378,7 @@ function criarGraficoPizza(dados, canvasId) {
                                 <th v-if="isLogado" class="text-center py-3 px-4">Açoes</th>
                             </tr>
                         </thead>
-                        <tbody v-if="data.dados?.arrecadacoes" v-for="dado in data.dados.arrecadacoes">
+                        <tbody v-if="data?.dados?.arrecadacoes" v-for="dado in data?.dados?.arrecadacoes">
                             <tr class="border-b border-gray-100 hover:bg-gray-50">
                                 <td class="py-3 px-4 font-medium">{{ dado.tributo }}</td>
                                 <td class="py-3 px-4">{{ meses[dado.mes] }}</td>

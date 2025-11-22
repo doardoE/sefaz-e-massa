@@ -12,36 +12,33 @@ const errorMessage = ref('');
 
 
 function fazerLogin() {
-
     axios.post('api/login', {
         email: email.value,
         password: password.value,
     })
         .then((resposta) => {
             const token = resposta.data.data.token;
-            console.log('touken: ', token)
 
-            // Salva o token e aplica no header do Axios
+            // Salva o token
             localStorage.setItem('token', token);
 
+            // Adiciona o token no header de todas as requisições
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
             router.push('/arrecadacoes');
-            console.log('touken: ', token)
         })
         .catch((error) => {
             if (error.response) {
-                // erro do back-end
                 errorMessage.value =
                     error.response.data.message || error.response.data.status || 'Erro desconhecido do servidor';
             } else if (error.request) {
-                // erro de rede
-                console.error('Erro de rede:', error.request);
                 errorMessage.value = 'Não foi possível conectar ao servidor.';
             } else {
-                // erro inesperado
                 errorMessage.value = 'Ocorreu um erro inesperado.';
             }
         });
 }
+
 </script>
 
 <template>

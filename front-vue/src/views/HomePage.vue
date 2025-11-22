@@ -3,11 +3,20 @@ import { DollarSign, ChevronRight, ArrowRight, Calculator } from 'lucide-vue-nex
 import axios from 'axios';
 import { ref } from 'vue'
 
-const data = ref({});
+const data = ref({
+  resumo: {
+    total_arrecadado: 0,
+    quantidade_registros: 0,
+    tributo_destaque: {
+      nome: '',
+      valor: 0
+    }
+  }
+});
 
 axios.get('api/arrecadacoes/kpis')
     .then((response) => {
-        data.value = response.data.data
+        data.value = response.data.resumo;
     })
     .catch((error) => {
         if (error.response && error.response.data) {
@@ -45,7 +54,7 @@ axios.get('api/arrecadacoes/kpis')
         </section>
 
         <!-- KPIs -->
-        <section class="py-8 bg-gray-50">
+        <section v-if="data" class="py-8 bg-gray-50">
             <div class="container mx-auto px-8 grid gap-4 md:grid-cols-3 max-w-6xl">
 
                 <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
@@ -53,8 +62,9 @@ axios.get('api/arrecadacoes/kpis')
                         <h3 class="text-sm font-medium text-gray-500">Total Arrecadado</h3>
                         <DollarSign class="text-blue-700" />
                     </div>
-                    <div class="text-2xl font-bold text-gray-900">R$ {{ (data.resumo?.total_arrecadado ??
-                        0.00).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</div>
+                    <div class="text-2xl font-bold text-gray-900">R$ {{ (data?.total_arrecadado ??
+                        0.00).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                        </div>
                     <p class="text-xs text-gray-500 mt-1">Acumulado em {{ new Date().getFullYear() }}</p>
                 </div>
 
@@ -64,8 +74,8 @@ axios.get('api/arrecadacoes/kpis')
                             Date().getFullYear() }})</span></h3>
                         <ArrowRight class="text-orange-700" />
                     </div>
-                    <div class="text-2xl font-bold text-gray-900">{{ data.resumo?.tributo_destaque.nome }}</div>
-                    <p class="text-xs text-gray-500 mt-1">R$ {{ (data.resumo?.tributo_destaque.valor ??
+                    <div class="text-2xl font-bold text-gray-900">{{ data?.tributo_destaque?.nome }}</div>
+                    <p class="text-xs text-gray-500 mt-1">R$ {{ (data?.tributo_destaque?.valor ??
                         0.00).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
                 </div>
 
@@ -75,7 +85,7 @@ axios.get('api/arrecadacoes/kpis')
                             Date().getFullYear() }})</span></h3>
                         <Calculator class="text-green-500" />
                     </div>
-                    <div class="text-2xl font-bold text-gray-900">{{ data.resumo?.quantidade_registros ?? 0 }}</div>
+                    <div class="text-2xl font-bold text-gray-900">{{ data?.quantidade_registros ?? 0 }}</div>
                     <p class="text-xs text-gray-500 mt-1">Lançamentos cadastrados</p>
                 </div>
 

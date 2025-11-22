@@ -1,7 +1,6 @@
 <script setup>
-import Dashboard from '@/views/Dashboard.vue';
 import axios from 'axios';
-import { ref, computed, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
   data: {
